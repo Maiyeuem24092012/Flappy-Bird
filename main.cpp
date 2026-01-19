@@ -1,22 +1,28 @@
-/* CORE ENGINE - FLAPPY BIRD
-   Logic: Gravity (0.25), Jump (-5.0), Win (100 points)
-*/
+/**
+ * CORE ENGINE - FLAPPY BIRD
+ * Chịu trách nhiệm: Trọng lực, Lực nhảy, Tính toán tọa độ.
+ */
 
-class BirdLogic {
+class BirdBrain {
 public:
-    float y = 250.0f;
+    float birdY = 250.0f;
     float velocity = 0.0f;
-    int score = 0;
-    bool isAlive = true;
+    const float GRAVITY = 0.25f;  // Trọng lực rơi
+    const float JUMP = -5.0f;      // Lực nhảy lên
 
-    void applyGravity() {
-        if (isAlive) {
-            velocity += 0.25f;
-            y += velocity;
-        }
+    // Logic xử lý nhảy
+    void processJump() {
+        velocity = JUMP;
     }
 
-    void flap() {
-        if (isAlive) velocity = -5.0f;
+    // Logic cập nhật vật lý mỗi khung hình
+    void updatePhysics() {
+        velocity += GRAVITY;
+        birdY += velocity;
+
+        // Giới hạn va chạm mặt đất (Base)
+        if (birdY > 400) {
+            birdY = 400;
+        }
     }
 };
