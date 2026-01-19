@@ -1,42 +1,23 @@
-/**
- * CORE ENGINE - FLAPPY BIRD
- * Logic chính: Trọng lực, Lực nhảy, Tính điểm.
- */
+/* CORE ENGINE - FLAPPY BIRD 
+   Logic xử lý: Trọng lực, Lực nhảy, Va chạm mặt đất.
+*/
 
-#include <iostream>
-
-class FlappyBirdEngine {
+class GameCore {
 public:
-    // Thông số vật lý chuẩn
-    float birdY = 256.0f;
-    float velocity = 0.0f;
-    const float GRAVITY = 0.25f;
-    const float JUMP_FORCE = -5.0f;
-    
-    int score = 0;
-    bool isAlive = true;
+    float birdY = 256.0f;     // Vị trí chim
+    float velocity = 0.0f;   // Vận tốc rơi
+    const float GRAVITY = 0.25f;  // Trọng lực
+    const float JUMP_FORCE = -4.5f; // Lực nhảy
 
-    // Xử lý nhảy
-    void flap() {
-        if (isAlive) velocity = JUMP_FORCE;
-    }
-
-    // Cập nhật trạng thái (được gọi mỗi khung hình)
     void update() {
-        if (!isAlive) return;
-
         velocity += GRAVITY;
         birdY += velocity;
+        
+        // Logic: Nếu chạm đất (tọa độ 400) thì chết
+        if (birdY > 400) birdY = 400;
+    }
 
-        // Giới hạn va chạm mặt đất (Base)
-        if (birdY > 400) {
-            birdY = 400;
-            isAlive = false;
-        }
-
-        // Logic thắng cuộc
-        if (score >= 100) {
-            std::cout << "Winner! 100 points reached." << std::endl;
-        }
+    void flap() {
+        velocity = JUMP_FORCE;
     }
 };
