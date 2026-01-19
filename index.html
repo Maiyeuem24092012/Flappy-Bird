@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flappy Bird C++ Project Showcase</title>
+    <style>
+        body { background: #1a1a1a; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+        canvas { border: 4px solid #4CAF50; background: #70c5ce; width: 320px; height: 480px; }
+        .code-box { background: #2d2d2d; padding: 15px; border-radius: 8px; width: 500px; height: 480px; overflow-y: auto; font-family: monospace; font-size: 12px; border: 1px solid #444; }
+        h1 { color: #4CAF50; }
+        .btn { background: #4CAF50; color: white; padding: 10px 20px; border: none; cursor: pointer; margin: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>🐦 Flappy Bird C++ & HTML Project</h1>
+    
+    <div class="container">
+        <div>
+            <h3>Play Version (HTML5)</h3>
+            <canvas id="gameCanvas" width="320" height="480"></canvas>
+            <br>
+            <button class="btn" onclick="location.reload()">Reset Game</button>
+        </div>
+
+        <div>
+            <h3>Source Code (main.cpp)</h3>
+            <div class="code-box">
+<pre id="cpp-code">
+// Đang tải nội dung main.cpp...
+</pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. Lấy nội dung từ file main.cpp trên GitHub của bạn
+        // Lưu ý: Thay 'YOUR_USERNAME' bằng tên thật của bạn khi đẩy lên GitHub
+        fetch('main.cpp')
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('cpp-code').textContent = data;
+            });
+
+        // 2. Logic Game rút gọn (Sử dụng lại bản JS trước đó của tôi)
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        let bird = { x: 50, y: 150, v: 0, g: 0.25 };
+        let pipes = [];
+        setInterval(() => {
+            ctx.clearRect(0, 0, 320, 480);
+            bird.v += bird.g; bird.y += bird.v;
+            ctx.fillStyle = "yellow"; ctx.fillRect(bird.x, bird.y, 20, 20);
+            if(bird.y > 480 || bird.y < 0) bird.y = 150, bird.v = 0;
+        }, 1000/60);
+        window.onclick = () => bird.v = -5;
+    </script>
+</body>
+</html>
