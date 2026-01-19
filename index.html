@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>Flappy Bird - C++ Engine</title>
+    <title>Flappy Bird Engine - Fixed</title>
     <style>
         body { margin: 0; background: #222; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        canvas { border: 4px solid #fff; background: #70c5ce; }
+        canvas { border: 4px solid #fff; background-color: #70c5ce; }
     </style>
 </head>
 <body>
@@ -15,7 +15,7 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// --- 1. ĐỊNH NGHĨA ĐƯỜNG DẪN (PATH) TỪ FILE CỦA BẠN ---
+// --- ĐƯỜNG DẪN TÀI NGUYÊN ---
 const IMG_PATH = "assets/images/";
 const AUD_PATH = "assets/audio/";
 
@@ -26,13 +26,12 @@ const assets = {
     birds: [new Image(), new Image(), new Image()],
     sounds: {
         wing: new Audio(AUD_PATH + 'wing.ogg'),
-        point: new Audio(AUD_PATH + 'point.ogg'),
         hit: new Audio(AUD_PATH + 'hit.ogg'),
-        die: new Audio(AUD_PATH + 'die.ogg')
+        point: new Audio(AUD_PATH + 'point.ogg')
     }
 };
 
-// Gán nguồn tài nguyên
+// Gán nguồn ảnh
 assets.bg.src = IMG_PATH + 'background-day.png';
 assets.pipe.src = IMG_PATH + 'pipe-green.png';
 assets.base.src = IMG_PATH + 'base.png';
@@ -40,58 +39,54 @@ assets.birds[0].src = IMG_PATH + 'yellowbird-upflap.png';
 assets.birds[1].src = IMG_PATH + 'yellowbird-midflap.png';
 assets.birds[2].src = IMG_PATH + 'yellowbird-downflap.png';
 
-// --- 2. BIÊN DỊCH LOGIC TỪ C++ ---
-let core = {
-    birdY: 256,
-    velocity: 0,
-    score: 0,
-    isAlive: true
+// --- MÔ PHỎNG ENGINE C++ ---
+let engine = {
+    y: 256,
+    v: 0,
+    isAlive: true,
+    score: 0
 };
 
-function engineStep() {
-    if (!core.isAlive) return;
-
-    // Áp dụng công thức từ main.cpp
-    core.velocity += 0.25; // GRAVITY
-    core.birdY += core.velocity;
-
-    // Va chạm nền (Base)
-    if (core.birdY > 400) {
-        core.birdY = 400;
-        if (core.isAlive) assets.sounds.hit.play();
-        core.isAlive = false;
-    }
-}
-
-// --- 3. HIỂN THỊ (RENDER) ---
-function render() {
+function loop() {
+    // 1. Vẽ nền
     ctx.drawImage(assets.bg, 0, 0);
 
-    // Vẽ Chim (Animation vỗ cánh)
-    let frame = Math.floor(Date.now() / 100) % 3;
-    ctx.drawImage(assets.birds[frame], 50, core.birdY, 34, 24);
+    // 2. Chạy Logic Engine (Biên dịch từ main.cpp)
+    if (engine.isAlive) {
+        engine.v += 0.25; // Gravity
+        engine.y += engine.v;
+    }
 
-    // Vẽ Mặt đất
+    // 3. Vẽ ống nước (giả lập)
+    ctx.drawImage(assets.pipe, 150, 300);
+
+    // 4. Vẽ mặt đất
     ctx.drawImage(assets.base, 0, 400, 288, 112);
 
-    // Điểm số
-    ctx.fillStyle = "white";
-    ctx.font = "40px Arial";
-    ctx.fillText(core.score, 130, 60);
+    // 5. Vẽ chim (Vỗ cánh)
+    let f = Math.floor(Date.now() / 100) % 3;
+    ctx.drawImage(assets.birds[f], 50, engine.y, 34, 24);
 
-    engineStep();
-    requestAnimationFrame(render);
+    // Kiểm tra va chạm đất
+    if (engine.y >= 400 && engine.isAlive) {
+        engine.isAlive = false;
+        assets.sounds.hit.play();
+    }
+
+    requestAnimationFrame(loop);
 }
 
-// --- 4. INPUT ---
-window.onkeydown = (e) => {
-    if (e.code === "Space" && core.isAlive) {
-        core.velocity = -5; // JUMP_FORCE từ main.cpp
+// Điều khiển
+window.onclick = window.onkeydown = () => {
+    if (engine.isAlive) {
+        engine.v = -5; // Jump
         assets.sounds.wing.play();
+    } else {
+        location.reload(); // Reset nếu chết
     }
 };
 
-render();
+loop();
 </script>
 </body>
 </html>
