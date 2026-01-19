@@ -1,16 +1,22 @@
-/* CORE LOGIC ENGINE - FLAPPY BIRD */
-#include <iostream>
+/* CORE ENGINE - FLAPPY BIRD
+   Logic: Gravity (0.25), Jump (-5.0), Win (100 points)
+*/
 
-class BirdEngine {
+class BirdLogic {
 public:
     float y = 250.0f;
     float velocity = 0.0f;
-    const float GRAVITY = 0.25f;
-    const float JUMP = -4.5f;
+    int score = 0;
+    bool isAlive = true;
 
-    void update() {
-        velocity += GRAVITY;
-        y += velocity;
-        if (y > 400) y = 400; // Giới hạn chạm đất
+    void applyGravity() {
+        if (isAlive) {
+            velocity += 0.25f;
+            y += velocity;
+        }
+    }
+
+    void flap() {
+        if (isAlive) velocity = -5.0f;
     }
 };
