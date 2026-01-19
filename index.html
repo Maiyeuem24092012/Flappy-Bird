@@ -2,10 +2,10 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Flappy Bird Engine</title>
+    <title>Flappy Bird - C++ Logic</title>
     <style>
-        body { margin: 0; background: #222; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        canvas { border: 4px solid #fff; background-color: #70c5ce; }
+        body { margin: 0; background: #222; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        canvas { border: 4px solid #fff; background-color: #70c5ce; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -15,46 +15,64 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// --- ĐỊNH NGHĨA ĐƯỜNG DẪN TỪ GITHUB CỦA BẠN ---
-const BASE_URL = "assets/";
+// --- ĐƯỜNG DẪN TÀI NGUYÊN (Dựa trên GitHub của bạn) ---
+const IMG_BASE = "assets/images/";
+const SND_BASE = "assets/audio/";
 
-const assets = {
+const res = {
     bg: new Image(), bird: new Image(), base: new Image(), pipe: new Image(),
-    wingSnd: new Audio(BASE_URL + "audio/wing.ogg"),
-    hitSnd: new Audio(BASE_URL + "audio/hit.ogg")
+    s_wing: new Audio(SND_BASE + "wing.ogg"),
+    s_hit: new Audio(SND_BASE + "hit.ogg"),
+    s_point: new Audio(SND_BASE + "point.ogg")
 };
 
-assets.bg.src = BASE_URL + "images/background-day.png";
-assets.bird.src = BASE_URL + "images/yellowbird-midflap.png";
-assets.base.src = BASE_URL + "images/base.png";
-assets.pipe.src = BASE_URL + "images/pipe-green.png";
+// Gán nguồn ảnh
+res.bg.src = IMG_BASE + "background-day.png";
+res.bird.src = IMG_BASE + "yellowbird-midflap.png";
+res.base.src = IMG_BASE + "base.png";
+res.pipe.src = IMG_BASE + "pipe-green.png";
 
-let birdY = 250, v = 0, alive = true;
+// Biến mô phỏng từ main.cpp
+let birdY = 250, velocity = 0, score = 0, alive = true;
 
-function run() {
-    ctx.drawImage(assets.bg, 0, 0);
-    
+function update() {
     if (alive) {
-        v += 0.25; // Trọng lực từ main.cpp
-        birdY += v;
+        velocity += 0.25; // Logic từ main.cpp
+        birdY += velocity;
     }
-
-    ctx.drawImage(assets.bird, 50, birdY, 34, 24);
-    ctx.drawImage(assets.base, 0, 400, 288, 112);
-
-    if (birdY >= 400 && alive) {
+    // Va chạm đất
+    if (birdY > 400) {
+        if (alive) res.s_hit.play();
+        birdY = 400;
         alive = false;
-        assets.hitSnd.play();
     }
-    requestAnimationFrame(run);
 }
 
-window.onclick = () => {
-    if(alive) { v = -5; assets.wingSnd.play(); }
-    else { location.reload(); }
-};
+function render() {
+    ctx.drawImage(res.bg, 0, 0);
+    ctx.drawImage(res.bird, 50, birdY, 34, 24);
+    ctx.drawImage(res.base, 0, 400, 288, 112);
+    
+    // Hiển thị điểm
+    ctx.fillStyle = "white";
+    ctx.font = "35px Arial";
+    ctx.fillText(score, 135, 50);
 
-run();
+    update();
+    requestAnimationFrame(render);
+}
+
+// Xử lý click để nhảy
+window.addEventListener("mousedown", () => {
+    if (alive) {
+        velocity = -5; // Jump Force từ main.cpp
+        res.s_wing.play().catch(()=>{}); // Tránh lỗi trình duyệt chặn âm thanh
+    } else {
+        location.reload(); // Reset game
+    }
+});
+
+render();
 </script>
 </body>
 </html>
