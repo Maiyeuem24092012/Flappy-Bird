@@ -1,12 +1,13 @@
-/* CORE ENGINE - FLAPPY BIRD
-   File này quản lý logic: Trọng lực, Va chạm, Tính điểm.
-*/
+/**
+ * CORE ENGINE - FLAPPY BIRD
+ * Logic chính: Trọng lực, Lực nhảy, Tính điểm.
+ */
 
 #include <iostream>
 
-class FlappyEngine {
+class FlappyBirdEngine {
 public:
-    // Các thông số vật lý (Đơn vị: Pixel)
+    // Thông số vật lý chuẩn
     float birdY = 256.0f;
     float velocity = 0.0f;
     const float GRAVITY = 0.25f;
@@ -15,28 +16,27 @@ public:
     int score = 0;
     bool isAlive = true;
 
-    // Bộ xử lý nhảy (Flap)
-    void onInput() {
-        if (!isAlive) return;
-        velocity = JUMP_FORCE;
+    // Xử lý nhảy
+    void flap() {
+        if (isAlive) velocity = JUMP_FORCE;
     }
 
-    // Bộ xử lý logic mỗi khung hình (Update)
-    void step() {
+    // Cập nhật trạng thái (được gọi mỗi khung hình)
+    void update() {
         if (!isAlive) return;
 
         velocity += GRAVITY;
         birdY += velocity;
 
-        // Kiểm tra va chạm mặt đất (Base ở tọa độ 400)
+        // Giới hạn va chạm mặt đất (Base)
         if (birdY > 400) {
             birdY = 400;
             isAlive = false;
         }
 
-        // Kiểm tra điều kiện thắng
+        // Logic thắng cuộc
         if (score >= 100) {
-            std::cout << "WINNER! 100 POINTS REACHED." << std::endl;
+            std::cout << "Winner! 100 points reached." << std::endl;
         }
     }
 };
