@@ -2,10 +2,10 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Flappy Bird - C++ Brain Engine</title>
+    <title>Flappy Bird - C++ Engine</title>
     <style>
         body { margin: 0; background: #222; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        canvas { border: 4px solid #fff; background: #70c5ce; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        canvas { border: 4px solid #fff; background: #70c5ce; }
     </style>
 </head>
 <body>
@@ -15,9 +15,9 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// --- ĐỊNH NGHĨA ĐƯỜNG DẪN CHÍNH XÁC ---
+// --- 1. ĐỊNH NGHĨA ĐƯỜNG DẪN (PATH) TỪ FILE CỦA BẠN ---
 const IMG_PATH = "assets/images/";
-const SND_PATH = "assets/audio/";
+const AUD_PATH = "assets/audio/";
 
 const assets = {
     bg: new Image(),
@@ -25,14 +25,14 @@ const assets = {
     base: new Image(),
     birds: [new Image(), new Image(), new Image()],
     sounds: {
-        wing: new Audio(SND_PATH + 'wing.ogg'),
-        point: new Audio(SND_PATH + 'point.ogg'),
-        hit: new Audio(SND_PATH + 'hit.ogg'),
-        die: new Audio(SND_PATH + 'die.ogg')
+        wing: new Audio(AUD_PATH + 'wing.ogg'),
+        point: new Audio(AUD_PATH + 'point.ogg'),
+        hit: new Audio(AUD_PATH + 'hit.ogg'),
+        die: new Audio(AUD_PATH + 'die.ogg')
     }
 };
 
-// Gán nguồn cho ảnh
+// Gán nguồn tài nguyên
 assets.bg.src = IMG_PATH + 'background-day.png';
 assets.pipe.src = IMG_PATH + 'pipe-green.png';
 assets.base.src = IMG_PATH + 'base.png';
@@ -40,57 +40,58 @@ assets.birds[0].src = IMG_PATH + 'yellowbird-upflap.png';
 assets.birds[1].src = IMG_PATH + 'yellowbird-midflap.png';
 assets.birds[2].src = IMG_PATH + 'yellowbird-downflap.png';
 
-// --- BIẾN LOGIC TỪ MAIN.CPP ---
+// --- 2. BIÊN DỊCH LOGIC TỪ C++ ---
 let core = {
     birdY: 256,
     velocity: 0,
     score: 0,
-    isAlive: true,
-    pipes: []
+    isAlive: true
 };
 
-function resetGame() {
-    core.birdY = 256; core.velocity = 0; core.score = 0; core.isAlive = true; core.pipes = [];
-}
-
-function update() {
+function engineStep() {
     if (!core.isAlive) return;
 
-    core.velocity += 0.25; // Trọng lực từ main.cpp
+    // Áp dụng công thức từ main.cpp
+    core.velocity += 0.25; // GRAVITY
     core.birdY += core.velocity;
 
+    // Va chạm nền (Base)
     if (core.birdY > 400) {
+        core.birdY = 400;
+        if (core.isAlive) assets.sounds.hit.play();
         core.isAlive = false;
-        assets.sounds.hit.play();
     }
 }
 
-function draw() {
+// --- 3. HIỂN THỊ (RENDER) ---
+function render() {
     ctx.drawImage(assets.bg, 0, 0);
-    
-    // Vẽ chim (vỗ cánh)
-    let f = Math.floor(Date.now() / 100) % 3;
-    ctx.drawImage(assets.birds[f], 50, core.birdY, 34, 24);
 
+    // Vẽ Chim (Animation vỗ cánh)
+    let frame = Math.floor(Date.now() / 100) % 3;
+    ctx.drawImage(assets.birds[frame], 50, core.birdY, 34, 24);
+
+    // Vẽ Mặt đất
     ctx.drawImage(assets.base, 0, 400, 288, 112);
-    
+
+    // Điểm số
     ctx.fillStyle = "white";
     ctx.font = "40px Arial";
-    ctx.fillText(core.score, 130, 50);
+    ctx.fillText(core.score, 130, 60);
 
-    update();
-    requestAnimationFrame(draw);
+    engineStep();
+    requestAnimationFrame(render);
 }
 
+// --- 4. INPUT ---
 window.onkeydown = (e) => {
-    if (e.code === "Space") {
-        if (!core.isAlive) resetGame();
-        core.velocity = -5; // Lực nhảy từ main.cpp
+    if (e.code === "Space" && core.isAlive) {
+        core.velocity = -5; // JUMP_FORCE từ main.cpp
         assets.sounds.wing.play();
     }
 };
 
-draw();
+render();
 </script>
 </body>
 </html>
