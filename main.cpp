@@ -1,23 +1,16 @@
-/* CORE ENGINE - FLAPPY BIRD 
-   Logic xử lý: Trọng lực, Lực nhảy, Va chạm mặt đất.
-*/
+/* CORE LOGIC ENGINE - FLAPPY BIRD */
+#include <iostream>
 
-class GameCore {
+class BirdEngine {
 public:
-    float birdY = 256.0f;     // Vị trí chim
-    float velocity = 0.0f;   // Vận tốc rơi
-    const float GRAVITY = 0.25f;  // Trọng lực
-    const float JUMP_FORCE = -4.5f; // Lực nhảy
+    float y = 250.0f;
+    float velocity = 0.0f;
+    const float GRAVITY = 0.25f;
+    const float JUMP = -4.5f;
 
     void update() {
         velocity += GRAVITY;
-        birdY += velocity;
-        
-        // Logic: Nếu chạm đất (tọa độ 400) thì chết
-        if (birdY > 400) birdY = 400;
-    }
-
-    void flap() {
-        velocity = JUMP_FORCE;
+        y += velocity;
+        if (y > 400) y = 400; // Giới hạn chạm đất
     }
 };
