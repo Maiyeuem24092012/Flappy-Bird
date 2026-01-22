@@ -1,78 +1,118 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Flappy Bird - C++ Logic</title>
+    <title>Flappy Bird - C++ Logic Engine</title>
     <style>
-        body { margin: 0; background: #222; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        canvas { border: 4px solid #fff; background-color: #70c5ce; cursor: pointer; }
+        body { margin: 0; background: #222; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: Arial, sans-serif; }
+        canvas { border: 4px solid #fff; background-color: #70c5ce; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
     </style>
 </head>
 <body>
     <canvas id="gameCanvas" width="288" height="512"></canvas>
 
 <script>
+/** * GỘP LOGIC TỪ MAIN.CPP VÀO RENDERER 
+ * Core: C++ Physics Logic
+ * View: HTML5 Canvas Assets
+ */
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// --- ĐƯỜNG DẪN TÀI NGUYÊN (Dựa trên GitHub của bạn) ---
-const IMG_BASE = "assets/images/";
-const SND_BASE = "assets/audio/";
+// 1. KHAI BÁO ASSETS (Phải khớp chính xác thư mục trên GitHub)
+const BASE_PATH = "assets/"; // Đường dẫn gốc trên repo của bạn
+const IMG_PATH = BASE_PATH + "images/";
+const SND_PATH = BASE_PATH + "audio/";
 
 const res = {
-    bg: new Image(), bird: new Image(), base: new Image(), pipe: new Image(),
-    s_wing: new Audio(SND_BASE + "wing.ogg"),
-    s_hit: new Audio(SND_BASE + "hit.ogg"),
-    s_point: new Audio(SND_BASE + "point.ogg")
+    bg: new Image(),
+    bird: new Image(),
+    base: new Image(),
+    pipe: new Image(),
+    s_wing: new Audio(SND_PATH + "wing.ogg"),
+    s_hit: new Audio(SND_PATH + "hit.ogg")
 };
 
 // Gán nguồn ảnh
-res.bg.src = IMG_BASE + "background-day.png";
-res.bird.src = IMG_BASE + "yellowbird-midflap.png";
-res.base.src = IMG_BASE + "base.png";
-res.pipe.src = IMG_BASE + "pipe-green.png";
+res.bg.src = IMG_PATH + "background-day.png";
+res.bird.src = IMG_PATH + "yellowbird-midflap.png";
+res.base.src = IMG_PATH + "base.png";
+res.pipe.src = IMG_PATH + "pipe-green.png";
 
-// Biến mô phỏng từ main.cpp
-let birdY = 250, velocity = 0, score = 0, alive = true;
-
-function update() {
-    if (alive) {
-        velocity += 0.25; // Logic từ main.cpp
-        birdY += velocity;
+// 2. CORE LOGIC (Mô phỏng y hệt cấu trúc class trong main.cpp)
+class BirdEngine {
+    constructor() {
+        this.y = 250;
+        this.velocity = 0;
+        this.gravity = 0.25; // Thông số từ C++
+        this.jumpForce = -5.0; // Thông số từ C++
+        this.isAlive = true;
+        this.score = 0;
     }
-    // Va chạm đất
-    if (birdY > 400) {
-        if (alive) res.s_hit.play();
-        birdY = 400;
-        alive = false;
+
+    update() {
+        if (this.isAlive) {
+            this.velocity += this.gravity;
+            this.y += this.velocity;
+        }
+
+        // Kiểm tra va chạm mặt đất (Tọa độ base là 400)
+        if (this.y > 400) {
+            this.y = 400;
+            if (this.isAlive) res.s_hit.play().catch(()=>{});
+            this.isAlive = false;
+        }
+    }
+
+    flap() {
+        if (this.isAlive) {
+            this.velocity = this.jumpForce;
+            res.s_wing.play().catch(()=>{});
+        } else {
+            // Nếu đã chết, click sẽ khởi động lại
+            Object.assign(this, new BirdEngine()); 
+        }
     }
 }
 
-function render() {
+const engine = new BirdEngine();
+
+// 3. VÒNG LẶP HIỂN THỊ (RENDERER)
+function draw() {
+    // Vẽ nền
     ctx.drawImage(res.bg, 0, 0);
-    ctx.drawImage(res.bird, 50, birdY, 34, 24);
+
+    // Vẽ chim dựa trên tọa độ từ Engine
+    ctx.drawImage(res.bird, 50, engine.y, 34, 24);
+
+    // Vẽ mặt đất
     ctx.drawImage(res.base, 0, 400, 288, 112);
-    
+
     // Hiển thị điểm
     ctx.fillStyle = "white";
-    ctx.font = "35px Arial";
-    ctx.fillText(score, 135, 50);
+    ctx.font = "bold 35px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(engine.score, canvas.width/2, 60);
 
-    update();
-    requestAnimationFrame(render);
+    if (!engine.isAlive) {
+        ctx.fillStyle = "rgba(0,0,0,0.5)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "white";
+        ctx.font = "20px Arial";
+        ctx.fillText("BẤM ĐỂ CHƠI LẠI", canvas.width/2, canvas.height/2);
+    }
+
+    engine.update();
+    requestAnimationFrame(draw);
 }
 
-// Xử lý click để nhảy
-window.addEventListener("mousedown", () => {
-    if (alive) {
-        velocity = -5; // Jump Force từ main.cpp
-        res.s_wing.play().catch(()=>{}); // Tránh lỗi trình duyệt chặn âm thanh
-    } else {
-        location.reload(); // Reset game
-    }
-});
+// Lắng nghe sự kiện
+window.addEventListener("mousedown", () => engine.flap());
+window.addEventListener("keydown", (e) => { if(e.code === "Space") engine.flap(); });
 
-render();
+// Khởi chạy
+draw();
 </script>
 </body>
 </html>
