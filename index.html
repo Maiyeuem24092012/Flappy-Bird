@@ -2,16 +2,18 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Flappy Bird Pro - Full Engine</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Flappy Bird Pro - Full Screen</title>
     <style>
-        body { margin: 0; background: #111; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Arial', sans-serif; }
+        body { margin: 0; background: #111; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
         canvas { 
-            height: 95vh; /* Phóng to màn hình lên mức tối đa */
+            /* Phóng to tối đa theo chiều rộng màn hình */
+            width: 100vw; 
+            max-width: 450px; /* Giới hạn độ rộng để không bị quá dẹt trên PC */
+            height: auto;
             aspect-ratio: 288 / 512;
             image-rendering: pixelated; 
-            border: 4px solid #fff;
             background-color: #70c5ce;
-            box-shadow: 0 0 30px rgba(0,0,0,0.8);
         }
     </style>
 </head>
@@ -22,7 +24,7 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// --- 1. TÀI NGUYÊN (Assets) ---
+// --- 1. TÀI NGUYÊN ---
 const IMG = "assets/images/";
 const SND = "assets/audio/";
 
@@ -41,7 +43,7 @@ res.pipe.src = IMG + "pipe-green.png";
 res.message.src = IMG + "message.png";
 res.gameOver.src = IMG + "gameover.png";
 
-// --- 2. TRẠNG THÁI & LOGIC (Random & Scoreboard) ---
+// --- 2. TRẠNG THÁI ---
 let state = "START"; 
 let game = {
     birdY: 256, v: 0, score: 0, 
@@ -50,33 +52,29 @@ let game = {
 };
 
 function reset() {
-    game.birdY = 256; game.v = 0; game.score = 0;
+    game.birdY = 200; game.v = 0; game.score = 0;
     game.pipes = []; game.frame = 0;
     state = "PLAYING";
 }
 
 function update() {
-    game.baseX = (game.baseX - 2) % 288; // Nền di chuyển liên tục
-
+    game.baseX = (game.baseX - 2) % 288;
     if (state !== "PLAYING") return;
 
     game.frame++;
-    game.v += 0.25; // Trọng lực
+    game.v += 0.25; 
     game.birdY += game.v;
 
-    // RANDOM ống nước (Độ cao ngẫu nhiên)
     if (game.frame % 100 === 0) {
-        let h = Math.floor(Math.random() * 200) + 50; // Random h từ 50 đến 250
+        let h = Math.floor(Math.random() * 200) + 50; 
         game.pipes.push({ x: 288, top: h, gap: 110, passed: false });
     }
 
     game.pipes.forEach(p => {
         p.x -= 2;
-        // Kiểm tra va chạm
         if (50 + 25 > p.x && 50 < p.x + 52) {
             if (game.birdY < p.top || game.birdY + 24 > p.top + p.gap) die();
         }
-        // Tính điểm
         if (!p.passed && p.x < 50) {
             game.score++;
             p.passed = true;
@@ -85,30 +83,66 @@ function update() {
     });
 
     if (game.pipes.length > 0 && game.pipes[0].x < -60) game.pipes.shift();
-    if (game.birdY > 400 || game.birdY < 0) die();
+    if (game.birdY > 390) die();
 }
 
 function die() {
+    if (state === "PLAYING") res.s_hit.play().catch(()=>{});
     state = "OVER";
-    res.s_hit.play().catch(()=>{});
     if (game.score > game.hScore) {
         game.hScore = game.score;
         localStorage.setItem("fbHighScore", game.hScore);
     }
 }
 
-// --- 3. HIỂN THỊ (Renderer) ---
+// --- 3. VẼ BẢNG ĐIỂM (SCOREBOARD) GIỐNG VIDEO ---
+function drawScoreboard() {
+    // Chữ Game Over
+    ctx.drawImage(res.gameOver, 48, 120);
+    
+    // Khung bảng điểm
+    ctx.fillStyle = "#ded895";
+    ctx.strokeStyle = "#543847";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(30, 200, 228, 126);
+    ctx.fillRect(30, 200, 228, 126);
+
+    // Chữ SCORE & BEST
+    ctx.fillStyle = "#f8b038"; // Màu vàng cam
+    ctx.font = "bold 14px 'Courier New'";
+    ctx.textAlign = "right";
+    ctx.fillText("SCORE", 240, 230);
+    ctx.fillText("BEST", 240, 280);
+
+    // Con số
+    ctx.fillStyle = "#fff";
+    ctx.font = "bold 24px 'Courier New'";
+    ctx.fillText(game.score, 240, 255);
+    ctx.fillText(game.hScore, 240, 305);
+
+    // Huy chương (Vòng tròn giả)
+    ctx.beginPath();
+    ctx.arc(80, 263, 25, 0, Math.PI * 2);
+    ctx.fillStyle = game.score > 10 ? "#f8b038" : "#a5a5a5"; 
+    ctx.fill();
+    ctx.stroke();
+
+    // Hướng dẫn chơi lại
+    ctx.fillStyle = "white";
+    ctx.font = "12px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("BẤM CHUỘT/PHÍM CÁCH ĐỂ THỬ LẠI", 144, 360);
+}
+
 function render() {
     ctx.drawImage(res.bg, 0, 0);
 
     game.pipes.forEach(p => {
-        // Vẽ ống trên
         ctx.save();
         ctx.translate(p.x + 52, p.top);
         ctx.rotate(Math.PI);
         ctx.drawImage(res.pipe, 0, 0, 52, 320);
         ctx.restore();
-        // Vẽ ống dưới
         ctx.drawImage(res.pipe, p.x, p.top + p.gap, 52, 320);
     });
 
@@ -118,31 +152,9 @@ function render() {
     if (state === "START") {
         ctx.drawImage(res.message, 52, 80);
     } else if (state === "OVER") {
-        // Hiển thị chữ Game Over
-        ctx.drawImage(res.gameOver, 52, 100);
-        
-        // Vẽ BẢNG ĐIỂM (Scoreboard)
-        ctx.fillStyle = "#ded895";
-        ctx.strokeStyle = "#543847";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(44, 200, 200, 110);
-        ctx.fillRect(44, 200, 200, 110);
-
-        ctx.fillStyle = "#543847";
-        ctx.font = "bold 20px Arial";
-        ctx.textAlign = "center";
-        ctx.fillText("SCORE", 144, 230);
-        ctx.font = "bold 24px Arial";
-        ctx.fillText(game.score, 144, 255);
-        
-        ctx.font = "bold 18px Arial";
-        ctx.fillText("BEST: " + game.hScore, 144, 290);
-        
-        ctx.font = "14px Arial";
-        ctx.fillText("Click hoặc Space để Restart", 144, 340);
+        drawScoreboard();
     } else {
         ctx.drawImage(res.bird, 50, game.birdY, 34, 24);
-        // Điểm số khi đang chơi
         ctx.fillStyle = "white";
         ctx.font = "bold 40px Arial";
         ctx.textAlign = "center";
@@ -153,7 +165,7 @@ function render() {
     requestAnimationFrame(render);
 }
 
-// --- 4. ĐIỀU KHIỂN (Chuột & Phím Cách) ---
+// --- 4. ĐIỀU KHIỂN ---
 function handleAction(e) {
     if (e.type === "keydown" && e.code !== "Space") return;
     if (e.code === "Space") e.preventDefault();
