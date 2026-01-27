@@ -1,37 +1,32 @@
-/* CORE ENGINE - FLAPPY BIRD (C++ Logic)
-   Nhiệm vụ: Tính toán tọa độ chim, tạo ống nước ngẫu nhiên và di chuyển thế giới.
-*/
-
+/* ADVANCED CORE ENGINE - FLAPPY BIRD */
 #include <vector>
 
-struct Pipe {
-    float x;
-    float top;
-    float gap = 110.0f;
-};
+enum GameState { START, PLAYING, GAMEOVER };
 
-class FlappyEngine {
+class FlappyBrain {
 public:
-    float birdY = 250.0f;
+    GameState state = START;
+    float birdY = 256.0f;
     float velocity = 0.0f;
-    float gravity = 0.25f;
-    float jumpForce = -5.0f;
-    
-    std::vector<Pipe> pipes;
-    float baseX = 0; // Tọa độ mặt đất
     int score = 0;
-    bool isAlive = true;
+    int highScore = 0;
 
-    // Logic này sẽ được JS biên dịch và chạy mỗi khung hình
-    void update() {
-        if (!isAlive) return;
-        
-        // 1. Chim rơi
-        velocity += gravity;
-        birdY += velocity;
+    // Logic xử lý khi người chơi tác động (Phím cách hoặc Chuột)
+    void handleInput() {
+        if (state == START) {
+            state = PLAYING;
+            velocity = -4.5f;
+        } else if (state == PLAYING) {
+            velocity = -4.5f;
+        } else if (state == GAMEOVER) {
+            reset();
+        }
+    }
 
-        // 2. Thế giới di chuyển (Mặt đất & Ống nước trôi sang trái)
-        baseX -= 2.0f; 
-        if (baseX <= -288) baseX = 0;
+    void reset() {
+        state = START;
+        birdY = 256.0f;
+        velocity = 0.0f;
+        score = 0;
     }
 };
