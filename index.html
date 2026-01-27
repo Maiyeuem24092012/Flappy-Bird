@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Flappy Bird - Full Engine Movement</title>
+    <title>Flappy Bird - C++ Brain Engine</title>
     <style>
         body { margin: 0; background: #222; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
         canvas { border: 4px solid #fff; background-color: #70c5ce; cursor: pointer; }
@@ -15,55 +15,54 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// --- 1. TÀI NGUYÊN (Khớp chính xác với thư mục assets/ của bạn) ---
+// --- TÀI NGUYÊN (Khớp với video mẫu) ---
 const IMG = "assets/images/";
 const SND = "assets/audio/";
 
 const res = {
     bg: new Image(), bird: new Image(), base: new Image(), pipe: new Image(),
+    message: new Image(), // Ảnh "Start" & "Tap"
     s_wing: new Audio(SND + "wing.ogg"),
     s_hit: new Audio(SND + "hit.ogg"),
     s_point: new Audio(SND + "point.ogg")
 };
+
 res.bg.src = IMG + "background-day.png";
 res.bird.src = IMG + "yellowbird-midflap.png";
 res.base.src = IMG + "base.png";
 res.pipe.src = IMG + "pipe-green.png";
+res.message.src = IMG + "message.png"; 
 
-// --- 2. ENGINE LOGIC (Gộp từ main.cpp) ---
-let game = {
-    birdY: 250, velocity: 0, score: 0, alive: true,
-    pipes: [], baseX: 0, frame: 0
-};
+// --- ENGINE TRẠNG THÁI ---
+let state = "START"; 
+let game = { birdY: 256, v: 0, score: 0, pipes: [], baseX: 0, frame: 0 };
 
-function reset() {
-    game = { birdY: 250, velocity: 0, score: 0, alive: true, pipes: [], baseX: 0, frame: 0 };
+function resetGame() {
+    game = { birdY: 256, v: 0, score: 0, pipes: [], baseX: 0, frame: 0 };
+    state = "PLAYING";
 }
 
 function update() {
-    if (!game.alive) return;
+    game.baseX = (game.baseX - 2) % 288; // Mặt đất luôn cuộn
+
+    if (state !== "PLAYING") return;
 
     game.frame++;
-    game.velocity += 0.25; // Gravity
-    game.birdY += game.velocity;
+    game.v += 0.25; // Trọng lực
+    game.birdY += game.v;
 
-    // Cuộn mặt đất (Tạo cảm giác đang bay)
-    game.baseX = (game.baseX - 2) % 288;
-
-    // Tạo ống nước sau mỗi 100 frame
+    // Tạo ống nước
     if (game.frame % 100 === 0) {
         let h = Math.floor(Math.random() * 200) + 50;
         game.pipes.push({ x: 288, top: h, gap: 110, passed: false });
     }
 
-    // Xử lý ống nước
     game.pipes.forEach(p => {
-        p.x -= 2; // Ống trôi sang trái
-
-        // Kiểm tra va chạm ống
+        p.x -= 2;
+        // Check va chạm
         if (50 + 25 > p.x && 50 < p.x + 52) {
             if (game.birdY < p.top || game.birdY + 24 > p.top + p.gap) {
-                game.alive = false;
+                state = "GAMEOVER";
                 res.s_hit.play().catch(()=>{});
             }
         }
@@ -76,48 +75,70 @@ function update() {
     });
 
     if (game.pipes.length > 0 && game.pipes[0].x < -60) game.pipes.shift();
-    if (game.birdY > 400 || game.birdY < 0) { game.alive = false; res.s_hit.play().catch(()=>{}); }
+    if (game.birdY > 400 || game.birdY < 0) {
+        state = "GAMEOVER";
+        res.s_hit.play().catch(()=>{});
+    }
 }
 
 function render() {
     ctx.drawImage(res.bg, 0, 0);
 
-    // Vẽ Ống nước (Dựa trên dữ liệu từ Engine)
-    game.pipes.forEach(p => {
-        // Ống trên (Lật ngược)
-        ctx.save();
-        ctx.translate(p.x + 52, p.top);
-        ctx.rotate(Math.PI);
-        ctx.drawImage(res.pipe, 0, 0, 52, 320);
-        ctx.restore();
-        // Ống dưới
-        ctx.drawImage(res.pipe, p.x, p.top + p.gap, 52, 320);
-    });
+    if (state === "START") {
+        ctx.drawImage(res.message, 52, 80); // Hiển thị giao diện khởi động từ video
+    } else {
+        game.pipes.forEach(p => {
+            ctx.save();
+            ctx.translate(p.x + 52, p.top);
+            ctx.rotate(Math.PI);
+            ctx.drawImage(res.pipe, 0, 0, 52, 320);
+            ctx.restore();
+            ctx.drawImage(res.pipe, p.x, p.top + p.gap, 52, 320);
+        });
+        ctx.drawImage(res.bird, 50, game.birdY, 34, 24);
+        
+        // Vẽ điểm số
+        ctx.fillStyle = "white";
+        ctx.font = "bold 40px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText(game.score, canvas.width/2, 50);
+    }
 
-    // Vẽ Mặt đất (Vẽ 2 tấm nối đuôi nhau để cuộn vô tận)
+    // Vẽ mặt đất cuộn
     ctx.drawImage(res.base, game.baseX, 400, 288, 112);
     ctx.drawImage(res.base, game.baseX + 288, 400, 288, 112);
 
-    // Vẽ Chim
-    ctx.drawImage(res.bird, 50, game.birdY, 34, 24);
-
-    // Hiển thị điểm số
-    ctx.fillStyle = "white";
-    ctx.font = "bold 40px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(game.score, canvas.width/2, 60);
+    if (state === "GAMEOVER") {
+        ctx.fillStyle = "rgba(0,0,0,0.5)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "white";
+        ctx.font = "24px Arial";
+        ctx.fillText("GAME OVER", canvas.width/2, 240);
+        ctx.font = "16px Arial";
+        ctx.fillText("NHẤN CÁCH HOẶC CHUỘT ĐỂ CHƠI LẠI", canvas.width/2, 280);
+    }
 
     update();
     requestAnimationFrame(render);
 }
 
-// Điều khiển
-window.addEventListener("mousedown", () => {
-    if (game.alive) {
-        game.velocity = -5;
+// --- ĐIỀU KHIỂN ĐA PHƯƠNG THỨC ---
+function action() {
+    if (state === "START") {
+        resetGame();
+    } else if (state === "PLAYING") {
+        game.v = -4.5;
         res.s_wing.play().catch(()=>{});
-    } else {
-        reset();
+    } else if (state === "GAMEOVER") {
+        resetGame();
+    }
+}
+
+window.addEventListener("mousedown", action);
+window.addEventListener("keydown", (e) => {
+    if (e.code === "Space") {
+        e.preventDefault(); // Chặn cuộn trang khi bấm phím cách
+        action();
     }
 });
 
