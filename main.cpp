@@ -1,28 +1,33 @@
-/**
- * CORE ENGINE - FLAPPY BIRD
- * Chịu trách nhiệm: Trọng lực, Lực nhảy, Tính toán tọa độ.
- */
+/* CORE ENGINE - FULL MOVEMENT LOGIC */
+#include <vector>
 
-class BirdBrain {
+struct Pipe {
+    float x;
+    float topHeight;
+    float gap = 110.0f;
+    bool passed = false;
+};
+
+class GameCore {
 public:
     float birdY = 250.0f;
     float velocity = 0.0f;
-    const float GRAVITY = 0.25f;  // Trọng lực rơi
-    const float JUMP = -5.0f;      // Lực nhảy lên
+    std::vector<Pipe> pipes;
+    float baseX = 0;
+    int score = 0;
+    bool isAlive = true;
 
-    // Logic xử lý nhảy
-    void processJump() {
-        velocity = JUMP;
-    }
+    void update() {
+        if (!isAlive) return;
 
-    // Logic cập nhật vật lý mỗi khung hình
-    void updatePhysics() {
-        velocity += GRAVITY;
+        // Logic vật lý chim
+        velocity += 0.25f; 
         birdY += velocity;
 
-        // Giới hạn va chạm mặt đất (Base)
-        if (birdY > 400) {
-            birdY = 400;
-        }
+        // Logic cuộn mặt đất (tạo cảm giác di chuyển)
+        baseX -= 2.0f;
+        if (baseX <= -288) baseX = 0;
+
+        // Logic quản lý ống nước sẽ được Renderer (JS) thực thi dựa trên các biến này
     }
 };
