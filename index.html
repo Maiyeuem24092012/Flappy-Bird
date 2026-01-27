@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>Flappy Bird Pro - Full Screen</title>
+    <title>Flappy Bird Pro - Full Screen Mode</title>
     <style>
-        body { margin: 0; background: #111; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
         canvas { 
-            /* Phóng to tối đa theo chiều rộng màn hình */
+            /* Phóng to màn hình theo chiều rộng */
             width: 100vw; 
-            max-width: 450px; /* Giới hạn độ rộng để không bị quá dẹt trên PC */
             height: auto;
+            max-width: 480px; /* Giới hạn để không bị quá méo trên máy tính */
             aspect-ratio: 288 / 512;
             image-rendering: pixelated; 
-            background-color: #70c5ce;
+            box-shadow: 0 0 50px rgba(0,0,0,1);
         }
     </style>
 </head>
@@ -43,7 +43,7 @@ res.pipe.src = IMG + "pipe-green.png";
 res.message.src = IMG + "message.png";
 res.gameOver.src = IMG + "gameover.png";
 
-// --- 2. TRẠNG THÁI ---
+// --- 2. TRẠNG THÁI GAME ---
 let state = "START"; 
 let game = {
     birdY: 256, v: 0, score: 0, 
@@ -65,6 +65,7 @@ function update() {
     game.v += 0.25; 
     game.birdY += game.v;
 
+    // RANDOM độ cao ống nước
     if (game.frame % 100 === 0) {
         let h = Math.floor(Math.random() * 200) + 50; 
         game.pipes.push({ x: 288, top: h, gap: 110, passed: false });
@@ -95,43 +96,47 @@ function die() {
     }
 }
 
-// --- 3. VẼ BẢNG ĐIỂM (SCOREBOARD) GIỐNG VIDEO ---
+// --- 3. VẼ SCOREBOARD & SỬA LỖI CHỮ KHÓ NHÌN ---
 function drawScoreboard() {
-    // Chữ Game Over
+    // Chữ Game Over gốc
     ctx.drawImage(res.gameOver, 48, 120);
     
-    // Khung bảng điểm
+    // Khung bảng điểm màu kem
     ctx.fillStyle = "#ded895";
     ctx.strokeStyle = "#543847";
     ctx.lineWidth = 3;
     ctx.strokeRect(30, 200, 228, 126);
     ctx.fillRect(30, 200, 228, 126);
 
-    // Chữ SCORE & BEST
-    ctx.fillStyle = "#f8b038"; // Màu vàng cam
-    ctx.font = "bold 14px 'Courier New'";
+    // Chữ SCORE & BEST (Màu cam đậm)
+    ctx.fillStyle = "#f8b038";
+    ctx.font = "bold 16px 'Courier New'";
     ctx.textAlign = "right";
     ctx.fillText("SCORE", 240, 230);
-    ctx.fillText("BEST", 240, 280);
+    ctx.fillText("BEST", 240, 285);
 
-    // Con số
+    // Con số điểm (Màu trắng, có viền đen nhẹ cho nét)
     ctx.fillStyle = "#fff";
-    ctx.font = "bold 24px 'Courier New'";
-    ctx.fillText(game.score, 240, 255);
-    ctx.fillText(game.hScore, 240, 305);
+    ctx.font = "bold 26px 'Courier New'";
+    ctx.fillText(game.score, 240, 258);
+    ctx.fillText(game.hScore, 240, 313);
 
-    // Huy chương (Vòng tròn giả)
+    // Vòng tròn huy chương (Trái)
     ctx.beginPath();
-    ctx.arc(80, 263, 25, 0, Math.PI * 2);
-    ctx.fillStyle = game.score > 10 ? "#f8b038" : "#a5a5a5"; 
+    ctx.arc(80, 263, 26, 0, Math.PI * 2);
+    ctx.fillStyle = game.score >= 10 ? "#f8b038" : "#999"; 
     ctx.fill();
     ctx.stroke();
 
-    // Hướng dẫn chơi lại
+    // SỬA LỖI CHỮ TRẮNG KHÓ NHÌN: Thêm viền đen (Stroke)
     ctx.fillStyle = "white";
-    ctx.font = "12px Arial";
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 1;
+    ctx.font = "bold 14px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("BẤM CHUỘT/PHÍM CÁCH ĐỂ THỬ LẠI", 144, 360);
+    let msg = "CLICK HOẶC CÁCH ĐỂ THỬ LẠI";
+    ctx.strokeText(msg, 144, 360); // Vẽ viền trước
+    ctx.fillText(msg, 144, 360);   // Vẽ chữ sau
 }
 
 function render() {
@@ -155,10 +160,14 @@ function render() {
         drawScoreboard();
     } else {
         ctx.drawImage(res.bird, 50, game.birdY, 34, 24);
+        // Điểm số giữa màn hình khi đang chơi
         ctx.fillStyle = "white";
-        ctx.font = "bold 40px Arial";
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = 2;
+        ctx.font = "bold 45px Arial";
         ctx.textAlign = "center";
-        ctx.fillText(game.score, canvas.width/2, 60);
+        ctx.strokeText(game.score, 144, 60);
+        ctx.fillText(game.score, 144, 60);
     }
 
     update();
